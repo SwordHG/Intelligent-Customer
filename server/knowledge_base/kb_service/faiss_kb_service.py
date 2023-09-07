@@ -10,7 +10,8 @@ from configs.model_config import (
 from server.knowledge_base.kb_service.base import KBService, SupportedVSType
 from functools import lru_cache
 from server.knowledge_base.utils import get_vs_path, load_embeddings, KnowledgeFile
-from langchain.vectorstores import FAISS
+# from langchain.vectorstores import FAISS
+from server.chat.in_out_context import MyFAISS as FAISS
 from langchain.embeddings.base import Embeddings
 from typing import List, Dict, Optional
 from langchain.docstore.document import Document

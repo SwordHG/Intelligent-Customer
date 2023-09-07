@@ -11,7 +11,7 @@ from configs.model_config import (
 )
 from functools import lru_cache
 import importlib
-from text_splitter import zh_title_enhance
+from text_splitter import zh_title_enhance, ChineseTextSplitter
 import langchain.document_loaders
 from langchain.docstore.document import Document
 from pathlib import Path
@@ -226,20 +226,23 @@ class KnowledgeFile:
         else:
             try:
                 if self.text_splitter_name is None:
-                    text_splitter_module = importlib.import_module('langchain.text_splitter')
-                    TextSplitter = getattr(text_splitter_module, "SpacyTextSplitter")
-                    text_splitter = TextSplitter(
-                        pipeline="zh_core_web_sm",
-                        chunk_size=CHUNK_SIZE,
-                        chunk_overlap=OVERLAP_SIZE,
-                    )
-                    self.text_splitter_name = "SpacyTextSplitter"
+                    # text_splitter_module = importlib.import_module('langchain.text_splitter')
+                    # TextSplitter = getattr(text_splitter_module, "SpacyTextSplitter")
+                    # text_splitter = TextSplitter(
+                    #     pipeline="zh_core_web_sm",
+                    #     chunk_size=CHUNK_SIZE,
+                    #     chunk_overlap=OVERLAP_SIZE,
+                    # )
+                    # self.text_splitter_name = "SpacyTextSplitter"
+                    text_splitter = ChineseTextSplitter(pdf=True, sentence_size=CHUNK_SIZE)  # 自己的text_spliter
+                    self.text_splitter_name = "ChineseTextSplitter"
                 else:
-                    text_splitter_module = importlib.import_module('langchain.text_splitter')
-                    TextSplitter = getattr(text_splitter_module, self.text_splitter_name)
-                    text_splitter = TextSplitter(
-                        chunk_size=CHUNK_SIZE,
-                        chunk_overlap=OVERLAP_SIZE)
+                    # text_splitter_module = importlib.import_module('langchain.text_splitter')
+                    # TextSplitter = getattr(text_splitter_module, self.text_splitter_name)
+                    # text_splitter = TextSplitter(
+                    #     chunk_size=CHUNK_SIZE,
+                    #     chunk_overlap=OVERLAP_SIZE)
+                    text_splitter = ChineseTextSplitter(pdf=True, sentence_size=CHUNK_SIZE)
             except Exception as e:
                 print(e)
                 text_splitter_module = importlib.import_module('langchain.text_splitter')
