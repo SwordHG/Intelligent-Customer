@@ -19,7 +19,7 @@ embedding_model_dict = {
     "text2vec-paraphrase": "shibing624/text2vec-base-chinese-paraphrase",
     "text2vec-sentence": "D:/sentence_vector/text2vec_sentence",
     "text2vec-multilingual": "shibing624/text2vec-base-multilingual",
-    "text2vec-bge": "D:/sentence_vector/text2vec_bge_large",
+    "text2vec-bge-large-chinese": "D:/sentence_vector/text2vec_bge_large",
     "m3e-small": "moka-ai/m3e-small",
     "m3e-base": "D:/sentence_vector/m3e-base",
     "m3e-large": "moka-ai/m3e-large",
@@ -27,15 +27,16 @@ embedding_model_dict = {
     "bge-base-zh": "BAAI/bge-base-zh",
     "bge-large-zh": "BAAI/bge-large-zh",
     "bge-large-zh-noinstruct": "BAAI/bge-large-zh-noinstruct",
+    "piccolo-base-zh": "sensenova/piccolo-base-zh",
+    "piccolo-large-zh": "sensenova/piccolo-large-zh",
     "text-embedding-ada-002": os.environ.get("OPENAI_API_KEY")
 }
 
 # 选用的 Embedding 名称
 EMBEDDING_MODEL = "text2vec"
 
-# Embedding 模型运行设备
+# Embedding 模型运行设备。设为"auto"会自动检测，也可手动设定为"cuda","mps","cpu"其中之一。
 EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-
 
 llm_model_dict = {
     "chatglm-6b": {
@@ -70,20 +71,32 @@ llm_model_dict = {
     # 如果出现WARNING: Retrying langchain.chat_models.openai.acompletion_with_retry.<locals>._completion_with_retry in
     # 4.0 seconds as it raised APIConnectionError: Error communicating with OpenAI.
     # 需要添加代理访问(正常开的代理软件可能会拦截不上)需要设置配置openai_proxy 或者 使用环境遍历OPENAI_PROXY 进行设置
+    # 比如: "openai_proxy": 'http://127.0.0.1:4780'
     "gpt-3.5-turbo": {
-        "local_model_path": "gpt-3.5-turbo",
         "api_base_url": "https://api.openai.com/v1",
         "api_key": os.environ.get("OPENAI_API_KEY"),
         "openai_proxy": os.environ.get("OPENAI_PROXY")
     },
+    # 线上模型。当前支持智谱AI。
+    # 如果没有设置有效的local_model_path，则认为是在线模型API。
+    # 请在server_config中为每个在线API设置不同的端口
+    # 具体注册及api key获取请前往 http://open.bigmodel.cn
+    "chatglm-api": {
+        "api_base_url": "http://127.0.0.1:8888/v1",
+        "api_key": os.environ.get("ZHIPUAI_API_KEY"),
+        "provider": "ChatGLMWorker",
+        "version": "chatglm_pro",  # 可选包括 "chatglm_lite", "chatglm_std", "chatglm_pro"
+    },
 }
-
 
 # LLM 名称
 LLM_MODEL = "chatglm2-6b"
 
-# LLM 运行设备
-LLM_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+# 历史对话轮数
+HISTORY_LEN = 3
+
+# LLM 运行设备。设为"auto"会自动检测，也可手动设定为"cuda","mps","cpu"其中之一。
+LLM_DEVICE = "auto"
 
 # 日志存储路径
 LOG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
@@ -145,11 +158,11 @@ SEARCH_ENGINE_TOP_K = 5
 NLTK_DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "nltk_data")
 
 # 基于本地知识问答的提示词模版（使用Jinja2语法，简单点就是用双大括号代替f-string的单大括号
-PROMPT_TEMPLATE = """已知信息：
-{{context}}
-根据上述已知信息，简洁和专业的来回答用户的问题。
-如果无法从已知信息中得到答案，请说 “我正在努力学习相关知识，请多给我点时间吧”，不允许在答案中添加编造成分，答案请使用中文。
-问题是：{{question}}"""
+PROMPT_TEMPLATE = """<指令>根据已知信息，简洁和专业的来回答问题。如果无法从中得到答案，请说 “根据已知信息无法回答该问题”，不允许在答案中添加编造成分，答案请使用中文。 </指令>
+
+<已知信息>{{ context }}</已知信息>
+
+<问题>{{ question }}</问题>"""
 
 # API 是否开启跨域，默认为False，如果需要开启，请设置为True
 # is open cross domain

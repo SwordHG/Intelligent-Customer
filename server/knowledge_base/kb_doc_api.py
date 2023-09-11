@@ -24,9 +24,9 @@ def search_docs(query: str = Body(..., description="用户输入", examples=["�
     if kb is None:
         return []
     docs = kb.search_docs(query, top_k, score_threshold)
-    data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
+    # data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
 
-    return data
+    return docs
 
 
 async def list_files(
@@ -80,6 +80,7 @@ async def upload_doc(file: UploadFile = File(..., description="上传文件"),
         kb.add_doc(kb_file, not_refresh_vs_cache=not_refresh_vs_cache)
     except Exception as e:
         print(e)
+        kb.delete_doc(kb_file, True)   # 向量化失败，删除上传到content中的文件
         return BaseResponse(code=500, msg=f"{kb_file.filename} 文件向量化失败，报错信息为: {e}")
 
     return BaseResponse(code=200, msg=f"成功上传文件 {kb_file.filename}")

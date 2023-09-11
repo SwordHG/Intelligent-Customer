@@ -23,7 +23,7 @@ class MyFAISS(FAISS):
             index: Any,
             docstore: Docstore,
             index_to_docstore_id: Dict[int, str],
-            relevance_score_fn,
+            relevance_score_fn: Optional[Callable[[float], float]] = None,
             normalize_L2: bool = False,
             distance_strategy : DistanceStrategy = DistanceStrategy.EUCLIDEAN_DISTANCE,
     ):
