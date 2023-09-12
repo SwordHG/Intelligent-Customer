@@ -16,6 +16,7 @@ import json
 import os
 from urllib.parse import urlencode
 from server.knowledge_base.kb_doc_api import search_docs
+from similiar_chat.similiar import similiar_compute, faiss_index, QA_dict
 
 
 def knowledge_base_chat(query: str = Body(..., description="用户输入", examples=["你好"]),
@@ -47,6 +48,7 @@ def knowledge_base_chat(query: str = Body(..., description="用户输入", examp
                                            history: Optional[List[History]],
                                            model_name: str = LLM_MODEL,
                                            ) -> AsyncIterable[str]:
+        response, score = similiar_compute(faiss_index, QA_dict, query)
         callback = AsyncIteratorCallbackHandler()
         model = ChatOpenAI(
             streaming=True,
@@ -83,7 +85,11 @@ def knowledge_base_chat(query: str = Body(..., description="用户输入", examp
             text = f"""出处 [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
             source_documents.append(text)
 
-        if stream:
+        if score <= 250:
+            yield json.dumps({"answer": response,
+                              "docs": []},
+                             ensure_ascii=False)
+        elif stream:
             async for token in callback.aiter():
                 # Use server-sent-events to stream the response
                 yield json.dumps({"answer": token,

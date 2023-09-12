@@ -5,12 +5,15 @@ from configs.model_config import (
     KB_ROOT_PATH,
     CACHED_VS_NUM,
     EMBEDDING_MODEL,
-    SCORE_THRESHOLD
+    SCORE_THRESHOLD,
+    IN_CONTEXT,
+    CHUNK_CONTENT
 )
 from server.knowledge_base.kb_service.base import KBService, SupportedVSType
 from functools import lru_cache
 from server.knowledge_base.utils import get_vs_path, load_embeddings, KnowledgeFile
-from langchain.vectorstores import FAISS
+# from langchain.vectorstores import FAISS
+from server.chat.in_out_context import MyFAISS as FAISS
 from langchain.embeddings.base import Embeddings
 from typing import List, Dict, Optional
 from langchain.docstore.document import Document
@@ -112,6 +115,9 @@ class FaissKBService(KBService):
                   embeddings: Embeddings = None,
                   ) -> List[Document]:
         search_index = self.load_vector_store()
+        search_index.chunk_size = IN_CONTEXT
+        search_index.chunk_conent = CHUNK_CONTENT
+        search_index.score_threshold = score_threshold
         docs = search_index.similarity_search_with_score(query, k=top_k, score_threshold=score_threshold)
         return docs
 
